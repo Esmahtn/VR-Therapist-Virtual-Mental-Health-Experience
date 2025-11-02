@@ -1,10 +1,22 @@
+.DS_Store
 .venv/
-venv/
 __pycache__/
-.ipynb_checkpoints/
 *.pyc
-*.pyo
-*.pyd
+
+# Audio artifacts
+*.mp3
 *.wav
 *.aiff
-*.mp3
+
+# Local secrets / backups
+Server/config.json
+Server/app_old.py
+
+# Unity (ekstra güvence)
+VR-Game/Library/
+VR-Game/Temp/
+VR-Game/Logs/
+VR-Game/Obj/
+VR-Game/Build/
+VR-Game/Builds/
+VR-Game/UserSettings/

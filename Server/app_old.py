@@ -32,7 +32,7 @@ client = initialize_client(TOKEN_ID)
 def transcribe_audio(audio_path: str) -> str:
     """
     16kHz, 16-bit mono LINEAR16 WAV dosyasını Google Speech-to-Text ile çözümler.
-    GOOGLE_APPLICATION_CREDENTIALS ortam değişkeni ayarlı olmalı.
+    GOOGLE_APPLICATION_CREDENTIALS ortam değişkeni ayarlı olmalı....
     """
     speech_client = speech.SpeechClient()
 
@@ -71,6 +71,7 @@ def process_wav():
     # sonu / olsa da olmasa da normalize edelim
     base_wav_path = raw if raw.endswith(os.sep) else raw + os.sep
     print(f"[API] base_wav_path: {base_wav_path}")
+
 
     if request.form.get('loaded_wav_file') == 'patient_speech':
         patient_wav_saved = True
@@ -183,6 +184,12 @@ def process():
 # -----------------------------
 # Main
 # -----------------------------
+
+
+
+
 if __name__ == '__main__':
     port = int(os.environ.get("FLASK_RUN_PORT", 5000))
     app.run(debug=True, port=port)
+
+
