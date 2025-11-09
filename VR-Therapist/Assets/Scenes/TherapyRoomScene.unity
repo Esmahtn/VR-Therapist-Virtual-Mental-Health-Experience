@@ -3362,6 +3362,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ch07_nonPBR@Sitting Talking
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 1d0e8f3e63bca87428ad65ad0664fa8e,
+        type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: d663f77aae16b524db1e6d5f6e75f2b3, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 1d0e8f3e63bca87428ad65ad0664fa8e,
+        type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 1d0e8f3e63bca87428ad65ad0664fa8e,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
