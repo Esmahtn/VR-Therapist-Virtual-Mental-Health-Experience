@@ -22,12 +22,12 @@ namespace UniGLTF.UniUnlit
         
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-            _mainTex = FindProperty(Utils.PropNameMainTex, properties);
-            _color = FindProperty(Utils.PropNameColor, properties);
-            _cutoff = FindProperty(Utils.PropNameCutoff, properties);
-            _blendMode = FindProperty(Utils.PropNameBlendMode, properties);
-            _cullMode = FindProperty(Utils.PropNameCullMode, properties);
-            _vColBlendMode = FindProperty(Utils.PropeNameVColBlendMode, properties);
+            _mainTex = FindProperty(UniUnlitUtil.PropNameMainTex, properties);
+            _color = FindProperty(UniUnlitUtil.PropNameColor, properties);
+            _cutoff = FindProperty(UniUnlitUtil.PropNameCutoff, properties);
+            _blendMode = FindProperty(UniUnlitUtil.PropNameBlendMode, properties);
+            _cullMode = FindProperty(UniUnlitUtil.PropNameCullMode, properties);
+            _vColBlendMode = FindProperty(UniUnlitUtil.PropNameVColBlendMode, properties);
 //            _srcBlend = FindProperty(PropNameSrcBlend, properties);
 //            _dstBlend = FindProperty(PropNameDstBlend, properties);
 //            _zWrite = FindProperty(PropNameZWrite, properties);
@@ -46,18 +46,18 @@ namespace UniGLTF.UniUnlit
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
         {
             var blendMode = UniUnlitRenderMode.Opaque;
-            if (material.HasProperty(Utils.PropNameStandardShadersRenderMode)) // from Standard shader
+            if (material.HasProperty(UniUnlitUtil.PropNameStandardShadersRenderMode)) // from Standard shader
             {
-                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(Utils.PropNameStandardShadersRenderMode));
+                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(UniUnlitUtil.PropNameStandardShadersRenderMode));
             }
 
             // assigns UniUnlit's properties...
             base.AssignNewShaderToMaterial(material, oldShader, newShader);
 
             // take over old value
-            material.SetFloat(Utils.PropNameBlendMode, (float) blendMode);
+            material.SetFloat(UniUnlitUtil.PropNameBlendMode, (float) blendMode);
 
-            Utils.ValidateProperties(material, isRenderModeChangedByUser: true);
+            UniUnlitUtil.ValidateProperties(material, isRenderModeChangedByUser: true);
         }
 
         private void DrawRenderingBox(MaterialEditor materialEditor, Material[] materials)
@@ -124,14 +124,24 @@ namespace UniGLTF.UniUnlit
         
         private static bool PopupEnum<T>(string name, MaterialProperty property, MaterialEditor editor) where T : struct
         {
+            if (!typeof(T).IsEnum) return false;
+            
             EditorGUI.showMixedValue = property.hasMixedValue;
             EditorGUI.BeginChangeCheck();
-            var ret = EditorGUILayout.Popup(name, (int) property.floatValue, Enum.GetNames(typeof(T)));
+            var values = (T[]) Enum.GetValues(typeof(T));
+            var names = Enum.GetNames(typeof(T));
+
+            var currInt = (int) property.floatValue;
+            var currValue = (T) Enum.ToObject(typeof(T), currInt);
+            var currIndex = Array.IndexOf(values, currValue);
+            var nextIndex = EditorGUILayout.Popup(name, currIndex, names);
             var changed = EditorGUI.EndChangeCheck();
             if (changed)
             {
                 editor.RegisterPropertyChangeUndo("EnumPopUp");
-                property.floatValue = ret;
+                var nextValue = values[nextIndex];
+                var nextInt = (int) (object) nextValue;
+                property.floatValue = nextInt;
             }
             EditorGUI.showMixedValue = false;
             return changed;
@@ -142,7 +152,7 @@ namespace UniGLTF.UniUnlit
         {
             foreach (var material in materials)
             {
-                Utils.ValidateProperties(material, isRenderModeChangedByUser);
+                UniUnlitUtil.ValidateProperties(material, isRenderModeChangedByUser);
             }
         }
     }
