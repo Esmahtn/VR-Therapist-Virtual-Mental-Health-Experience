@@ -300,7 +300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feeef8d85de8db242bdda70cc7ff5acd, type: 3}
   m_Name: OculusTouchControllerProfile Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: Oculus Touch Controller Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.oculustouch
@@ -360,7 +360,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85fd4a84074c74cb183c18e803dabb9e, type: 3}
   m_Name: ARAnchorFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 1
+  m_enabled: 0
   nameUi: 'Meta Quest: AR Anchors'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-anchor
@@ -533,7 +533,7 @@ MonoBehaviour:
     m_List: 00000000
   m_depthSubmissionMode: 0
   m_spacewarpMotionVectorTextureFormat: 0
-  m_optimizeBufferDiscards: 0
+  m_optimizeBufferDiscards: 1
   m_symmetricProjection: 0
 --- !u!114 &-269475993554676974
 MonoBehaviour:
@@ -744,7 +744,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ec7ac3a07bc448fbb43bbcff14d5b12, type: 3}
   m_Name: ARRaycastFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 1
+  m_enabled: 0
   nameUi: 'Meta Quest: AR Raycasts'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-raycast
@@ -817,7 +817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e567abbf4d944210acb6315178bb015, type: 3}
   m_Name: ARCameraFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 1
+  m_enabled: 0
   nameUi: 'Meta Quest: AR Camera (Passthrough)'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-camera
@@ -870,7 +870,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d00bb9c182ae8406ca03773119fa07ea, type: 3}
   m_Name: ARPlaneFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 1
+  m_enabled: 0
   nameUi: 'Meta Quest: AR Plane Detection'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-plane
@@ -996,7 +996,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 076937beb8763d94790d2e9cc1248ac8, type: 3}
   m_Name: ARSessionFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 1
+  m_enabled: 0
   nameUi: 'Meta Quest: AR Session'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-session
