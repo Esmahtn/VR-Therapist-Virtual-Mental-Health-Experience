@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f647cc0545697264a9878224faada6d5, type: 3}
   m_Name: MetaQuestFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: Meta Quest Support
   version: 1.0.0
   featureIdInternal: com.unity.openxr.feature.metaquest
@@ -360,7 +360,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85fd4a84074c74cb183c18e803dabb9e, type: 3}
   m_Name: ARAnchorFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: 'Meta Quest: AR Anchors'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-anchor
@@ -505,12 +505,6 @@ MonoBehaviour:
   m_Name: Android
   m_EditorClassIdentifier: 
   features:
-  - {fileID: 3153089375901368615}
-  - {fileID: 3669459209828142051}
-  - {fileID: 4913633096676412287}
-  - {fileID: 6739371990138567691}
-  - {fileID: 7809886612648785799}
-  - {fileID: -4014453899538318984}
   - {fileID: -7483679867117144584}
   - {fileID: 3268578875173361911}
   - {fileID: -4072578302458508425}
@@ -520,6 +514,12 @@ MonoBehaviour:
   - {fileID: -6296882532817900366}
   - {fileID: -3522132474339323129}
   - {fileID: 1627963982009387214}
+  - {fileID: -4014453899538318984}
+  - {fileID: 3669459209828142051}
+  - {fileID: 4913633096676412287}
+  - {fileID: 3153089375901368615}
+  - {fileID: 6739371990138567691}
+  - {fileID: 7809886612648785799}
   - {fileID: -4145790577859510147}
   - {fileID: -8995419291922279524}
   - {fileID: -3388397919682022008}
@@ -744,7 +744,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ec7ac3a07bc448fbb43bbcff14d5b12, type: 3}
   m_Name: ARRaycastFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: 'Meta Quest: AR Raycasts'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-raycast
@@ -817,7 +817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e567abbf4d944210acb6315178bb015, type: 3}
   m_Name: ARCameraFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: 'Meta Quest: AR Camera (Passthrough)'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-camera
@@ -870,7 +870,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d00bb9c182ae8406ca03773119fa07ea, type: 3}
   m_Name: ARPlaneFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: 'Meta Quest: AR Plane Detection'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-plane
@@ -952,12 +952,6 @@ MonoBehaviour:
   m_Name: Standalone
   m_EditorClassIdentifier: 
   features:
-  - {fileID: -5239000270131445525}
-  - {fileID: 1940818452099416074}
-  - {fileID: 401377564866330025}
-  - {fileID: 838424900726032065}
-  - {fileID: -7657472318478001761}
-  - {fileID: -5190100013007258253}
   - {fileID: -5069875911806370912}
   - {fileID: 3859563907282528292}
   - {fileID: -6039495841245025362}
@@ -968,6 +962,12 @@ MonoBehaviour:
   - {fileID: 5928857705525099721}
   - {fileID: 7614066849144624907}
   - {fileID: 1143778456956315228}
+  - {fileID: -5190100013007258253}
+  - {fileID: 1940818452099416074}
+  - {fileID: 401377564866330025}
+  - {fileID: -5239000270131445525}
+  - {fileID: 838424900726032065}
+  - {fileID: -7657472318478001761}
   - {fileID: -5936895261786307142}
   - {fileID: 5235017846445257555}
   - {fileID: 7068966277094199265}
@@ -996,7 +996,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 076937beb8763d94790d2e9cc1248ac8, type: 3}
   m_Name: ARSessionFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: 'Meta Quest: AR Session'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.arfoundation-meta-session
@@ -1057,7 +1057,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfde4033cbc8045a69c465b226fd4284, type: 3}
   m_Name: DisplayUtilitiesFeature Android
   m_EditorClassIdentifier: 
-  m_enabled: 0
+  m_enabled: 1
   nameUi: 'Meta Quest: Display Utilities'
   version: 0.1.0
   featureIdInternal: com.unity.openxr.feature.meta-display-utilities
