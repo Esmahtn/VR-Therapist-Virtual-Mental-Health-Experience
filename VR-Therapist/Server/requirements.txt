@@ -1,0 +1,10 @@
+flask
+flask-cors
+google-cloud-speech
+google-generativeai
+google-cloud-texttospeech
+pydub
+soundfile
+boto3
+requests
+python-dotenv
