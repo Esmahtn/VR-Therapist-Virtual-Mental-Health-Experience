@@ -2,8 +2,9 @@
 from flask import Flask, request, jsonify, send_file
 import io, json
 import google.generativeai as genai
-from google.cloud import speech_v1p1beta1 as speech
-from google.cloud import texttospeech_v1 as texttospeech  # <-- değişiklik
+# from google.cloud import speech_v1p1beta1 as speech
+# from google.cloud import texttospeech_v1 as texttospeech
+
 
 
 
