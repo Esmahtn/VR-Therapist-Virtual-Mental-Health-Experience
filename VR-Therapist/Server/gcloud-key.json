@@ -1,0 +1,13 @@
+﻿{
+  "type": "service_account",
+  "project_id": "vr-therapist-476719",
+  "private_key_id": "d1ef883124d3e83bac748817ab34ee4fb37c1423",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC9VxiUYjwO3rrW\nFBTYNwyamJvgkuHIHe0iRpO1dkPsZOhkobi6kQNUKJO+CfkEUMiiXzSmdeFqEqmN\nd7W8NqgnMR/cd4QlJmM5pEeLNEZNn/m7RNsaFmk8/oFcVPpKusmVeYtTXMmVwT5O\n9M4jugwUqy7P6/gRqmS+T7BYNabAe6Cj44BjuI6/EsWMkniynyIpKDe6zY4j/3HM\nE1veO3KE+TWzw8PYHmD883qmVNhFipsh/+nzRMMvlIRhlukffcSPHkiyorABZYdD\n4+PRQ+DNqJn0612xBJhTPXTlHkgIfByof+uQ0jXN2YDAExEn8TUaXItSi7zjYbO1\nXS8icTQ9AgMBAAECggEAAxMeQNCckZA/3/iZAw7Xy03loB66gGWuA2O6g9SdE0Jr\nPLEcnxj6QRxck9Y1H0MRkwNxRy+8XpzZeITkZF9N2T8UuZ+OO401SMsYZ1QMvTd3\nFnmuhiytflJStvVhUCPa4KzF3K9xzZcDBES48T8U8aP7AWDfWSgXdTi1kCUk5VTF\ndl2F304uM0VG0oO7E8hXzCa8Jv+lasoglYb6GGGuRG4tIVELClvn+czSlBkJgm7i\ndv3blyqZOxwXBwSKP0NVHOoWziilETv6T6pI0eW4z4TEJKlttCztwLfmN9V1eZnx\nbzW/hwCCeU6KsC4Qv1hh222xNqhG3Wds415Bav76OQKBgQDjNRfYKlBUTO7LFIT2\n+h2INdX78z1f2rvyWwkW3vQu8+c/OejdffD2+WQkgaaolKhqQSInElRS70OXJmQt\nMaYe99yaR5sj/+taXgyoiMOzdypLxBIB9ySWkLGyPfWO6r9P/O73jBEgV6WUwxnu\nc5FDcKl0IlNgc8mcnbfM/giFZQKBgQDVVYq2hJCUD4XMNtowO59ZfF0qWA8WqwjV\n0fcOfNYsBtSb+QBmKlJgpKc9YuTDoh2R6G0L0XBQFp/pqETkRIopOta0ywTYtWTg\nT1tawDjONGCt8e3lp1I5DMcR6qZGADr07LXCd11xonWXgOlG7Zfh1Rsm+vEYI0WD\nU79p5kDR+QKBgA3Rotug5zXZYAS2AMhMuhMYwyUJzEfSM/AvnUPo140rhHsR+JnQ\nGSHMVUzrHcnPENc1kvAxazOIHeJJkXo2NNZZWO+BP2xXGmdqpPZzKwP1UXs+N6Iq\n9+y4bDZdElxY5r3kslwYBsqiyg1cOG2KVeF2LrhDhjKtmCuQZCdxo+8JAoGALAG0\nVogsBs7Y69JY2eBCs8PquARoQGXRscHZM9zelUBndTE9OtX6HkN42DnhNNXpQaLv\nc6Olhm/UVu/GHkxhL7Yaejry6f0pLPhRwPur/CVj2B3y1A/a7zfKjNCZshD0GHgH\n2nCjDwDTPwhxlpcGYKiELFtRhogoG7oX3zGHJ4kCgYAeoufqylFlf5F6Qpuuhjjy\n82wWumMZZD6mMGdSzbnvnIQggLEwvTOhYLAUNEyeASPDKhIv4Wk6+RdkyTaPtRtY\nHDtVAXFA1hI8NVRsjyGcUWo/ynSiXhgtZplw6TtYniA9j17QYwfLiM+75NE0VXWv\nrOx2YKf7uEVB9Js6zDMXeg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "vr-therapist-backend@vr-therapist-476719.iam.gserviceaccount.com",
+  "client_id": "105388883871073866198",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vr-therapist-backend%40vr-therapist-476719.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

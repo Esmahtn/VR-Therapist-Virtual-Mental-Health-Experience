@@ -1,10 +1,8 @@
-# app.py (temiz, Gemini + Google STT, dummy TTS)
 from flask import Flask, request, jsonify, send_file
 import io, json
 import google.generativeai as genai
-#from google.cloud import speech_v1p1beta1 as speech
-#from google.cloud import texttospeech_v1 as texttospeech  # <-- değişiklik
-
+from google.cloud import speech
+from google.cloud import texttospeech
 
 
 
@@ -13,6 +11,8 @@ with open("config.json", "r", encoding="utf-8") as f:
     CFG = json.load(f)
 
 GEMINI_API_KEY = CFG.get("GEMINI_API_KEY", "")
+GOOGLE_KEY_PATH = CFG.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+
 if not GEMINI_API_KEY:
     raise RuntimeError("GEMINI_API_KEY missing in config.json")
 
@@ -24,6 +24,7 @@ app = Flask(__name__)
 @app.get("/health")
 def health():
     return jsonify({"ok": True}), 200
+
 
 # --- chat (Gemini) ---
 @app.post("/chat")
@@ -39,33 +40,40 @@ def chat():
         "Be empathetic, concise, and offer concrete next steps. "
         "Avoid medical diagnosis; encourage seeking professional help in crisis."
     )
+
     prompt = f"{system_prompt}\n\nContext: {context}\n\nUser: {user_text}"
 
     model = genai.GenerativeModel("gemini-2.0-flash")
     resp = model.generate_content(prompt)
     reply = getattr(resp, "text", "").strip()
+
     return jsonify({"reply": reply})
 
-# --- stt (Google) ---
+
+# --- stt (Google Speech-to-Text) ---
 @app.post("/stt")
 def stt():
     if "file" not in request.files:
         return jsonify({"error": "file is required"}), 400
+
     audio_bytes = request.files["file"].read()
 
     client = speech.SpeechClient()
     audio = speech.RecognitionAudio(content=audio_bytes)
+
     config = speech.RecognitionConfig(
-        # emin değilsen ENCODING_UNSPECIFIED güvenli
         encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
         language_code="tr-TR",
         enable_automatic_punctuation=True,
     )
+
     response = client.recognize(config=config, audio=audio)
     text = " ".join([r.alternatives[0].transcript for r in response.results]) if response.results else ""
+
     return jsonify({"text": text})
 
-# --- tts (şimdilik dummy metin) ---
+
+# --- tts (Google Text-to-Speech) ---
 @app.post("/tts")
 def tts():
     data = request.get_json(force=True, silent=True) or {}
@@ -75,27 +83,35 @@ def tts():
 
     try:
         client = texttospeech.TextToSpeechClient()
+
         synthesis_input = texttospeech.SynthesisInput(text=text)
+
         voice = texttospeech.VoiceSelectionParams(
             language_code="tr-TR",
-            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,
+            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
         )
+
         audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=1.0
+            audio_encoding=texttospeech.AudioEncoding.MP3
         )
+
         resp = client.synthesize_speech(
-            input=synthesis_input, voice=voice, audio_config=audio_config
+            input=synthesis_input,
+            voice=voice,
+            audio_config=audio_config
         )
+
         return send_file(
             io.BytesIO(resp.audio_content),
             mimetype="audio/mpeg",
             as_attachment=False,
-            download_name="speech.mp3",
+            download_name="speech.mp3"
         )
+
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

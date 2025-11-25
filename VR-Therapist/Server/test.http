@@ -1,0 +1,9 @@
+POST http://127.0.0.1:5001/stt
+Content-Type: multipart/form-data; boundary=----123
+
+------123
+Content-Disposition: form-data; name="file"; filename="ses.wav"
+Content-Type: audio/wav
+
+< C:\Users\Esma\Desktop\VR-Therapist-Virtual-Mental-Health-Experience\VR-Therapist\Server\test.wav
+------123--

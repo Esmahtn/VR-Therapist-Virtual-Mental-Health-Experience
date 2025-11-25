@@ -1,6 +1,6 @@
 {
   "GEMINI_API_KEY": "AIzaSyAiSYLrveNozACvIi7JJbuyFW3e5wbcGkM",
-  "GOOGLE_APPLICATION_CREDENTIALS": "/Users/ferayibadem/Desktop/speechkey.json",
+  "GOOGLE_APPLICATION_CREDENTIALS": "C:/Users/Esma/Desktop/gcloud-key.json",
 
   "AWS_ACCESS_KEY_ID": "",
   "AWS_SECRET_ACCESS_KEY": "",
