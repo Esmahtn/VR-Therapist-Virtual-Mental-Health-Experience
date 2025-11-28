@@ -153,3 +153,4 @@ __marimo__/
 
 # Ensure text normalization
 * text=auto
+Server/gcloud-key.json
