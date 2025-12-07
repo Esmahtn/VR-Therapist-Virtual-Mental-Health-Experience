@@ -3,17 +3,21 @@ using UnityEngine.SceneManagement;
 
 public class SceneLoader : MonoBehaviour
 {
-    // Inspector'da belirleyeceğimiz hedef sahne adı
+    // Yüklenecek hedef sahnenin adı
     public string targetSceneName = "TaskRoom"; 
 
-    // Bu, kapı/geçit objesine eklenecek bir kod olmalı.
-    // Kapı objesinin bir Collider'ı ve isTrigger özelliği açık olmalıdır.
-    private void OnTriggerEnter(Collider other)
+    // Start() metodu oyun başladığında bir kez çalışır.
+    void Start() 
     {
-        // Sadece Player tag'ine sahip bir objeyle çarpışıyorsa geçişi yap.
-        if (other.CompareTag("Player"))
-        {
-            SceneManager.LoadScene(targetSceneName);
-        }
+        // Sahnenin hemen yüklenmesi için 2 saniye bekleyelim.
+        Invoke("StartSceneTransition", 2f); 
     }
+
+    public void StartSceneTransition()
+    {
+        Debug.Log("Sahne Geçişi Kod İle Başlatıldı.");
+        SceneManager.LoadScene(targetSceneName);
+    }
+    
+    // NOT: Butonunuzun bu kodu tetiklemesi için StartSceneTransition() fonksiyonu gereklidir.
 }
