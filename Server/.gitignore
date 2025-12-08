@@ -1,3 +1,28 @@
-*.json
-__pycache__
-.idea
+# macOS
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Notebooks (lokal denemeler)
+*.ipynb
+
+# Audio artifacts (test ve çıktı)
+*.mp3
+*.wav
+*.aiff
+
+# Local secrets / config
+Server/config.json
+Server/keys/
+
+# Unity cache
+VR-Game/Library/
+VR-Game/Temp/
+VR-Game/Logs/
+VR-Game/Obj/
+VR-Game/Build/
+VR-Game/Builds/
+VR-Game/UserSettings/

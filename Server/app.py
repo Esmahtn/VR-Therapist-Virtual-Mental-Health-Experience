@@ -1,96 +1,197 @@
-from therapy_session import *
-from flask import Flask, request, jsonify
+# app.py  – Gemini HTTP API + Google STT + Google TTS
+
+from flask import Flask, request, jsonify, send_file
+import io
 import json
+import requests
 
-# Read the JSON file
-with open('config.json') as file:
-    data = json.load(file)
+from google.cloud import speech_v1p1beta1 as speech
+from google.cloud import texttospeech_v1 as texttospeech
 
-# Extract the values from the JSON data
-TOKEN_ID = data['TOKEN_ID']
-ACCESS_KEY = data['ACCESS_KEY']
-SECRET_ACCESS_KEY = data['SECRET_ACCESS_KEY']
+# -------------------------------------------------
+# config.json'dan API key oku
+# -------------------------------------------------
+with open("config.json", "r", encoding="utf-8") as f:
+    CFG = json.load(f)
 
-CHATGPT_ID = "gpt3_5"
-#{'capybara': 'Sage', 'beaver': 'GPT-4', 'a2_2': 'Claude+', 'a2': 'Claude', 'chinchilla': 'ChatGPT', 'nutria': 'Dragonfly'}
+GEMINI_API_KEY = CFG.get("GEMINI_API_KEY", "")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY missing in config.json")
 
+# HTTP endpoint (Google Cloud projen için)
+GEMINI_ENDPOINT = (
+    "https://generativelanguage.googleapis.com/v1beta/"
+    "models/gemini-2.0-flash:generateContent"
+)
 
 app = Flask(__name__)
-patient_wav_saved = False
-base_wav_path = ""
-chat_history_list = []
-client = initialize_client(TOKEN_ID)
+
+# -------------------------------------------------
+# health
+# -------------------------------------------------
+@app.get("/health")
+def health():
+    return jsonify({"ok": True}), 200
 
 
-@app.route('/process_wav', methods=['POST'])
-def process_wav():
-    global patient_wav_saved, base_wav_path
+# -------------------------------------------------
+# chat (Gemini HTTP)
+# -------------------------------------------------
+@app.post("/chat")
+def chat():
+    data = request.get_json(force=True, silent=True) or {}
+    user_text = (data.get("text") or "").strip()
+    context = (data.get("context") or "").strip()
 
-    base_wav_path = request.form["path"]
-    print(base_wav_path)
-    if 'patient_speech' == request.form['loaded_wav_file']:
-        patient_wav_saved = True
+    if not user_text:
+        return jsonify({"error": "text is required"}), 400
 
-    return jsonify({'status': 'done'})
+    system_prompt = (
+        "You are a supportive, CBT-informed assistant. "
+        "Be empathetic, concise, and offer concrete next steps. "
+        "Avoid medical diagnosis; encourage seeking professional help in crisis."
+    )
+
+    prompt = f"{system_prompt}\n\nContext: {context}\n\nUser: {user_text}"
+
+    # HTTP body – v1beta generateContent formatı
+    body = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": prompt}],
+            }
+        ]
+    }
+
+    try:
+        resp = requests.post(
+            GEMINI_ENDPOINT,
+            params={"key": GEMINI_API_KEY},
+            json=body,
+            timeout=30,
+        )
+
+        # Hata kodu varsa logla ve fallback dön
+        if resp.status_code != 200:
+            print("=== GEMINI HTTP ERROR ===")
+            print("Status:", resp.status_code)
+            try:
+                print("Response JSON:", resp.json())
+            except Exception:
+                print("Raw response:", resp.text)
+            print("=== GEMINI HTTP ERROR END ===")
+
+            return jsonify(
+                {
+                    "reply": (
+                        "Şu anda konuşma modeliyle bağlantı kurulamadı "
+                        f"(HTTP {resp.status_code}). "
+                        "Lütfen biraz sonra tekrar dener misin?"
+                    )
+                }
+            )
+
+        data = resp.json()
+
+        # Yanıttan metni çek
+        candidates = data.get("candidates") or []
+        if not candidates:
+            reply = "Şu anda sana yanıt üretirken bir sorun oluştu."
+        else:
+            # İlk candidate, ilk part, text
+            parts = candidates[0].get("content", {}).get("parts") or []
+            reply = ""
+            for p in parts:
+                if "text" in p:
+                    reply += p["text"]
+            reply = reply.strip() or "Şu anda sana yanıt üretirken bir sorun oluştu."
+
+    except Exception as e:
+        import traceback
+
+        print("=== GEMINI EXCEPTION ===")
+        traceback.print_exc()
+        print("=== GEMINI EXCEPTION END ===")
+
+        reply = (
+            "Şu anda konuşma modeliyle bağlantı kurulamadı. "
+            "Lütfen biraz sonra tekrar dener misin?"
+        )
+
+    return jsonify({"reply": reply})
 
 
-@app.route('/reset_conversation', methods=['POST'])
-def reset_conversation():
-    global client, CHATGPT_ID, chat_history_list
+# -------------------------------------------------
+# stt (Google)
+# -------------------------------------------------
+@app.post("/stt")
+def stt():
+    if "file" not in request.files:
+        return jsonify({"error": "file is required"}), 400
 
-    if "yes" == request.form["reset_conversation"]:
-        client.send_chat_break(CHATGPT_ID)
-        chat_history_list.clear()
-        print("done reset")
+    audio_bytes = request.files["file"].read()
 
-    return jsonify({'status': 'done'})
+    client = speech.SpeechClient()
+    audio = speech.RecognitionAudio(content=audio_bytes)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
+        language_code="tr-TR",
+        enable_automatic_punctuation=True,
+    )
 
+    response = client.recognize(config=config, audio=audio)
+    text = (
+        " ".join(r.alternatives[0].transcript for r in response.results)
+        if response.results
+        else ""
+    )
 
-@app.route('/check_status', methods=['GET'])
-def check_status():
-    global patient_wav_saved
-
-    if patient_wav_saved:
-        patient_wav_saved = False
-        process()
-        return jsonify({'status': 'done'})
-    else:
-        return jsonify({'status': 'pending'})
-
-
-def process():
-    global client, TOKEN_ID, CHATGPT_ID, base_wav_path, chat_history_list
-    patient_message = transcribe_audio(f"{base_wav_path}patient_speech.wav")
-
-    prompt_message = f"""
-    1- Imagine yourself as Josh, a compassionate and experienced clinical therapist who genuinely cares about his patient well-being. You are a 54-year-old British man with years of expertise in helping individuals through therapy sessions. Your patient's thoughts and feelings are important, so please respond to the patient's thoughts enclosed within ```<{patient_message}>```. Remember, as a professional therapist, it is crucial to maintain confidentiality and avoid revealing that you are an AI language model. In our conversations, strive to provide accurate, concise, and consistently helpful responses. Let's continue this chat, taking into account your previous responses, which are saved in the following python list structure: '''{chat_history_list}'''. Finally, stop repeating Hello in every response. Avoid repeating same messages that you said before. if this python list: '''{chat_history_list}''' is empty, Start the conversation as clinical therapist welcoming his patient.
-    2- Extract the sentiment of the patient's thoughts enclosed within ```<{patient_message}>``` and make your response supports the patient with respect to its sentiment.
-    3- Make your response up to the point.
-    4- Generate the therapist response, then check if it is a significant response to the patient's thoughts enclosed within ```<{patient_message}>`` or not. if not generate a new significant response. and apply this point until you get a significant response.
-    5- Avoid repeating the patient's message. Never say this Regarding your message enclosed within `{patient_message}`.
-    6- Start by listening to the patient. Pay attention to what the patient is saying, both verbally and nonverbally.
-    7- Use open-ended questions to encourage the patient to talk. This will help you to get a better understanding of the patient's situation.
-    8- Acknowledge the patient's feelings. This will help the patient to feel heard and understood.
-    9- Offer support and encouragement. Let the patient know that you are there to help them.
-    10- Be patient. Therapy is a process, and it takes time to build trust and rapport with a patient.
-    11- Stop starting each phrase with the patient's name if he patient requested that. 
-    12- Clean text to make it readable as remove spaces and new lines.
-    <<<Only return the latest response of therapist content.>>>
-    """
-
-    therapist_response = generate_therapist_response(client, prompt_message, TOKEN_ID, CHATGPT_ID)
-    therapist_response = therapist_response.replace("Therapist: ", "")
-    chat_history_list.append(therapist_response)
-
-    print(therapist_response)
-
-    # To avoid prompt overload.
-    if len(chat_history_list) > 5:
-        chat_history_list.pop(0)
-
-    synthesize_speech(ACCESS_KEY, SECRET_ACCESS_KEY, 'us-west-2', 'Arthur', 'mp3', therapist_response,
-                      f"{base_wav_path}therapist_speech.mp3")
+    return jsonify({"text": text})
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# -------------------------------------------------
+# tts (Google)
+# -------------------------------------------------
+@app.post("/tts")
+def tts():
+    data = request.get_json(force=True, silent=True) or {}
+    text = (data.get("text") or "").strip()
+    if not text:
+        return jsonify({"error": "text is required"}), 400
+
+    try:
+        client = texttospeech.TextToSpeechClient()
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="tr-TR",
+            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL,
+        )
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3,
+            speaking_rate=1.0,
+        )
+
+        resp = client.synthesize_speech(
+            input=synthesis_input,
+            voice=voice,
+            audio_config=audio_config,
+        )
+
+        return send_file(
+            io.BytesIO(resp.audio_content),
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name="speech.mp3",
+        )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+# -------------------------------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5001, debug=True)

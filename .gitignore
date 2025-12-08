@@ -1,5 +1,20 @@
-/VR Game/Builds/
-/VR Game/Library/
-/VR Game/Logs/
+# macOS
+.DS_Store
 
-/Server/venv/
+# Python
+Server/.venv/
+Server/__pycache__/
+*.pyc
+
+# Audio artifacts
+*.mp3
+*.wav
+*.aiff
+
+# Local secrets — DO NOT COMMIT
+Server/config.json
+Server/*.json
+
+# Logs and temp files
+*.log
+*.tmp
