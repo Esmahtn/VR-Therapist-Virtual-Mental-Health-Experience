@@ -92,7 +92,7 @@ Material:
     - _ReflectColor: {r: 0.4044118, g: 0.4044118, b: 0.4044118, a: 0.5019608}
     - _SpecColor: {r: 0.3897059, g: 0.3897059, b: 0.3897059, a: 1}
   m_BuildTextureStacks: []
---- !u!114 &9038436668819284674
+--- !u!114 &6602075761400392776
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
