@@ -1,35 +1,32 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit; 
 
 public class SmashOnHit : MonoBehaviour
 {
     // Inspector'da kırık tek parça modelinizi sürükleyip bırakın
     public GameObject shatteredPrefab; 
-    public LayerMask floorLayer; 
+    
+    // Kırılma eşiği: Fırlatmanın hızını algılaması için makul bir eşik.
+    public float smashVelocityThreshold = 3.5f; 
 
-    private Rigidbody objectRb;
     private bool isSmashed = false;
+    private Rigidbody objectRb;
 
     void Start()
     {
         objectRb = GetComponent<Rigidbody>();
-        // Kırık objeyi başlangıçta gizle
         if (shatteredPrefab != null)
         {
             shatteredPrefab.SetActive(false);
         }
     }
 
-    // Fiziksel çarpışma anında çağrılır
     private void OnCollisionEnter(Collision collision)
     {
         if (isSmashed) return;
         
-        // 1. Çarpma hızını hesapla
         float collisionForce = collision.relativeVelocity.magnitude;
-        float smashVelocityThreshold = 3.5f; // Fırlatma sertliği eşiği
-
-        // 2. Yeterli hızla çarptıysa kırılmayı tetikle
+        
+        // Fırlatmanın kuvveti eşiği geçerse kırılmayı tetikle
         if (collisionForce > smashVelocityThreshold)
         {
             SmashObject();
@@ -40,13 +37,12 @@ public class SmashOnHit : MonoBehaviour
     {
         isSmashed = true;
         
-        // 1. Sağlam objeyi gizle
+        // Sağlam objeyi gizle
         gameObject.SetActive(false); 
 
-        // 2. Kırık objeyi göster ve fiziğini serbest bırak
+        // Kırık objeyi göster ve fiziğini serbest bırak
         if (shatteredPrefab != null)
         {
-            // Kırık objeyi sağlam objenin son pozisyonunda aktif et
             shatteredPrefab.transform.position = transform.position;
             shatteredPrefab.transform.rotation = transform.rotation;
             shatteredPrefab.SetActive(true); 
@@ -54,11 +50,12 @@ public class SmashOnHit : MonoBehaviour
             Rigidbody shatteredRb = shatteredPrefab.GetComponent<Rigidbody>();
             if (shatteredRb != null)
             {
-                shatteredRb.isKinematic = false; // Parçaların düşmesini sağlar
+                shatteredRb.isKinematic = false; 
+                shatteredRb.velocity = objectRb.velocity; 
+                shatteredRb.angularVelocity = objectRb.angularVelocity;
             }
         }
         
-        // Script'i devre dışı bırak
         enabled = false;
     }
 }
