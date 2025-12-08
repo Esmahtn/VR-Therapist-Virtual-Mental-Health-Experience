@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem; 
 using System.Collections; 
+using UnityEngine.XR; // VR Input için gerekli
 
 public class CustomPCGrabController : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class CustomPCGrabController : MonoBehaviour
     public Transform handPosition;  
     public float grabRange = 3f;    
     public LayerMask grabbableLayer; 
-    public float throwForce = 15f; // BU ARTIK KULLANILMAYACAK VEYA HAFİF AŞAĞI İTME İÇİN KULLANILABİLİR.
+    public float throwForce = 15f; 
     
     // Renkler
     public Color defaultColor = Color.red;
@@ -19,15 +20,52 @@ public class CustomPCGrabController : MonoBehaviour
     private GameObject currentlyHeldObject = null;
     private Rigidbody heldRb;
     private Collider playerCollider; 
+    
+    // VR Kontrolcüsünü tutacak değişken (Tam adı kullanıldı: UnityEngine.XR.InputDevice)
+    private UnityEngine.XR.InputDevice leftHandDevice; 
 
     void Start()
     {
-        // Karakterin ana Collider'ını (CharacterController) hiyerarşiden bulur.
         playerCollider = transform.root.GetComponentInChildren<CharacterController>();
 
         if (playerCollider == null)
         {
             Debug.LogError("XR Rig üzerinde CharacterController bileşeni bulunamadı! Çarpışma kapatılamaz.");
+        }
+        
+        // --- GRAB GİRİŞİ BAĞLANTISI ---
+        
+        // 1. Sol VR Kontrolcüsünü Bulmaya Çalış
+        var devices = new System.Collections.Generic.List<UnityEngine.XR.InputDevice>(); 
+        
+        // Controller ve Left özelliklerini taşıyan cihazları al
+        UnityEngine.XR.InputDevices.GetDevicesWithCharacteristics(
+            InputDeviceCharacteristics.Controller | InputDeviceCharacteristics.Left, 
+            devices
+        );
+
+        if (devices.Count > 0)
+        {
+            leftHandDevice = devices[0];
+            Debug.Log("VR Sol Kontrolcü bulundu: " + leftHandDevice.name);
+        }
+        else
+        {
+            // Eğer Controller|Left bulamazsa, TrackedDevice|Left kombinasyonunu dene
+             UnityEngine.XR.InputDevices.GetDevicesWithCharacteristics(
+                InputDeviceCharacteristics.TrackedDevice | InputDeviceCharacteristics.Left, 
+                devices
+            );
+            
+            if (devices.Count > 0)
+            {
+                leftHandDevice = devices[0];
+                Debug.Log("VR Sol Kontrolcü bulundu (TrackedDevice): " + leftHandDevice.name);
+            }
+            else
+            {
+                Debug.Log("VR kontrolcü bulunamadı. PC 'E' tuşu yakalama için kullanılacak.");
+            }
         }
         
         Cursor.lockState = CursorLockMode.Locked;
@@ -39,7 +77,8 @@ public class CustomPCGrabController : MonoBehaviour
         HandleRaycasting();
         HandleGrabInput();
     }
-
+    
+    // --- IŞIN YAYINLAMA ---
     void HandleRaycasting()
     {
         RaycastHit hit;
@@ -56,13 +95,34 @@ public class CustomPCGrabController : MonoBehaviour
         }
     }
 
+    // --- GRİP GİRİŞİ YÖNETİMİ ---
     void HandleGrabInput()
     {
+        bool grabInputReceived = false;
+
+        // A) VR Kontrolcü Girişi Kontrolü
+        if (leftHandDevice.isValid)
+        {
+            bool buttonPressed;
+            
+            // Grip tuşunun anlık durumunu sorgula
+            if (leftHandDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.gripButton, out buttonPressed) && buttonPressed)
+            {
+                grabInputReceived = buttonPressed; 
+            }
+        }
+
+        // B) PC Girişi Kontrolü (E Tuşu)
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+        {
+            grabInputReceived = true;
+        }
+
+        if (grabInputReceived)
         {
             if (currentlyHeldObject != null)
             {
-                ReleaseObject(); // Fırlatma işlemi
+                ReleaseObject(); 
             }
             else
             {
@@ -70,7 +130,8 @@ public class CustomPCGrabController : MonoBehaviour
             }
         }
     }
-
+    
+    // --- OBJEYİ TUTMA ---
     void TryGrabObject()
     {
         RaycastHit hit;
@@ -83,7 +144,6 @@ public class CustomPCGrabController : MonoBehaviour
                 currentlyHeldObject = hit.collider.gameObject;
                 heldRb = targetRb;
 
-                // Tutma
                 heldRb.isKinematic = true; 
                 currentlyHeldObject.transform.SetParent(handPosition);
                 currentlyHeldObject.transform.localPosition = Vector3.zero;
@@ -91,29 +151,17 @@ public class CustomPCGrabController : MonoBehaviour
         }
     }
 
+    // --- OBJEYİ BIRAKMA/FIRLATMA (Dikey Düşme) ---
     void ReleaseObject()
     {
-        // 1. Objenin ebeveynliğini kaldır ve fiziği aç
         currentlyHeldObject.transform.SetParent(null);
         heldRb.isKinematic = false; 
 
-        // -----------------------------------------------------------
-        // BURASI DÜZELTİLDİ: SADECE DİKEY HAREKET İÇİN HIZ AYARI
-        // -----------------------------------------------------------
-
-        // Mevcut hızı al (Bu hız, fırlatmadan hemen önceki anlık hızıdır)
+        // SADECE DİKEY HAREKET İÇİN HIZ AYARI
         Vector3 currentVelocity = heldRb.velocity;
+        heldRb.velocity = new Vector3(0f, currentVelocity.y, 0f); 
 
-        // X (ileri/geri) ve Z (yan) hız bileşenlerini sıfırla.
-        // Y bileşeni (dikey hız/yerçekimi) olduğu gibi kalır, böylece hemen düşmeye başlar.
-        heldRb.velocity = new Vector3(0f, currentVelocity.y, 0f);
-
-        // Not: Eski AddForce satırını yorum satırı yaptım. Artık yatay itme kuvveti uygulanmayacak.
-        // Vector3 throwDirection = transform.root.forward;
-        // heldRb.AddForce(throwDirection * throwForce, ForceMode.VelocityChange);
-
-
-        // 3. Çarpışma Çözümü (İçe girmeyi engelle)
+        // Çarpışma Çözümü (İçe girmeyi engelle)
         Collider heldCollider = currentlyHeldObject.GetComponent<Collider>();
         
         if (playerCollider != null && heldCollider != null)
@@ -121,7 +169,6 @@ public class CustomPCGrabController : MonoBehaviour
             Physics.IgnoreCollision(playerCollider, heldCollider, true);
         }
 
-        // 4. Referansları temizle ve çarpışmayı tekrar açmak için Coroutine başlat
         GameObject releasedObject = currentlyHeldObject;
         Collider releasedCollider = heldCollider;
         
@@ -134,9 +181,9 @@ public class CustomPCGrabController : MonoBehaviour
         }
     }
 
+    // --- ÇARPIŞMAYI YENİDEN AKTİF ETMEK İÇİN COROUTINE ---
     IEnumerator ReEnableCollision(GameObject releasedObject, Collider releasedCollider)
     {
-        // 0.5 saniye bekle
         yield return new WaitForSeconds(0.5f); 
 
         if (releasedObject != null && releasedCollider != null && playerCollider != null)
