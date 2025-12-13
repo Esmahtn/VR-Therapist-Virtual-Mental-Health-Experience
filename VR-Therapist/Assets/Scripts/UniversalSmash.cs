@@ -1,88 +1,96 @@
 using UnityEngine;
-using System.Collections; 
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class UniversalSmash : MonoBehaviour
 {
-    // SAĞLAM BİBLO ÜZERİNDE
+    [Header("Kırık Obje")]
+    public GameObject brokenSibling;
 
-    [Header("Hiyerarşi Bağlantısı")]
-    // Kırık olan (gizli) alt objeyi buraya sürükleyin. (Tek Rigidbody olmalı)
-    public GameObject brokenSibling; 
-    
-    [Header("Fizik Ayarları")]
-    // Elle fırlatmada kırılması için gereken minimum hız
-    public float smashVelocityThreshold = 20.0f; 
+    [Header("Kırılma Eşikleri")]
+    public float requiredImpulse = 30f;      // SOPA (deneyerek artır)
+    public float requiredThrowSpeed = 2.2f;   // ELLE FIRLATMA
+
+    [Header("Kırıcı Nesne")]
+    public string breakerTag = "Stick";
 
     private bool isSmashed = false;
+    private bool wasReleased = false;
+
     private Rigidbody solidRb;
-    private Rigidbody brokenRb; // Kırık objenin Rigidbody'si
+    private Rigidbody brokenRb;
+    private XRGrabInteractable grab;
 
     void Start()
     {
-        solidRb = GetComponent<Rigidbody>(); 
-        
-        // Kırık Sibling'in Rigidbody'sini al
+        solidRb = GetComponent<Rigidbody>();
+        grab = GetComponent<XRGrabInteractable>();
+
         if (brokenSibling != null)
         {
             brokenRb = brokenSibling.GetComponent<Rigidbody>();
+            brokenSibling.SetActive(false);
         }
 
-        // Başlangıçta kırık objenin gizli olduğundan emin ol
-        if (brokenSibling != null && brokenSibling.activeSelf)
-        {
-             brokenSibling.SetActive(false);
-        }
-
-        if (solidRb == null) 
-        {
-            Debug.LogError(gameObject.name + ": Rigidbody zorunludur!");
-            enabled = false;
-        }
+        if (grab != null)
+            grab.selectExited.AddListener(OnReleased);
     }
 
-    // El ile fırlatıldığında tetiklenir (Hız kontrolü)
-    private void OnCollisionEnter(Collision collision)
+    void OnReleased(SelectExitEventArgs args)
+    {
+        wasReleased = true;
+    }
+
+    void OnCollisionEnter(Collision collision)
     {
         if (isSmashed) return;
-        
-        float collisionForce = collision.relativeVelocity.magnitude;
-        
-        if (collisionForce > smashVelocityThreshold)
+
+        // 🟡 SOPA / ALET ÇARPMASI
+        if (collision.collider.CompareTag(breakerTag))
         {
-            // Debug.Log("Fırlatma/Yere Çarpma Algılandı ve Kırılma Başlatıldı.");
-            SmashIt(); 
+            float impulse = collision.impulse.magnitude;
+            Debug.Log($"[IMPULSE] {impulse}");
+
+            if (impulse >= requiredImpulse)
+                Smash();
+        }
+        // 🟢 ELLE FIRLATMA
+        else if (wasReleased)
+        {
+            float speed = solidRb.velocity.magnitude;
+            Debug.Log($"[FIRLATMA HIZI] {speed}");
+
+            if (speed >= requiredThrowSpeed)
+                Smash();
+
+            wasReleased = false;
         }
     }
 
-    // Kırma ve Geçiş İşlemini Yapar (Hem el fırlatması hem de Sopa tarafından çağrılır)
-    public void SmashIt()
+    void Smash()
     {
         if (isSmashed) return;
         isSmashed = true;
-        
-        // 1. Sağlam objeden hızı al
-        Vector3 initialVelocity = solidRb.velocity;
-        Vector3 initialAngularVelocity = solidRb.angularVelocity;
 
-        // 2. Kırık Sibling'i görünür yap
-        if (brokenSibling != null)
-        {
-            // Konum senkronizasyonu
-            brokenSibling.transform.position = transform.position; 
-            brokenSibling.transform.rotation = transform.rotation; 
-            
-            brokenSibling.SetActive(true); 
-        }
-        
-        // 3. Kırık objeye hızı aktar
+        solidRb.isKinematic = false;
+        solidRb.useGravity = true;
+
+        brokenSibling.transform.position = transform.position;
+        brokenSibling.transform.rotation = transform.rotation;
+        brokenSibling.SetActive(true);
+
         if (brokenRb != null)
         {
-             brokenRb.isKinematic = false; 
-             brokenRb.velocity = initialVelocity; 
-             brokenRb.angularVelocity = initialAngularVelocity;
+            brokenRb.isKinematic = false;
+            brokenRb.useGravity = true;
+            brokenRb.velocity = solidRb.velocity;
+            brokenRb.angularVelocity = solidRb.angularVelocity;
         }
-        
-        // 4. Sağlam objeyi gizle
+
         gameObject.SetActive(false);
+    }
+
+    public void SmashIt()
+    {
+        Smash();
     }
 }
