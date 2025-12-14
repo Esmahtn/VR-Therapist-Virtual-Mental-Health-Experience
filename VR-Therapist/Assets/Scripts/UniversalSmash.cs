@@ -10,6 +10,9 @@ public class UniversalSmash : MonoBehaviour
     public float requiredImpulse = 30f;      // SOPA (deneyerek artır)
     public float requiredThrowSpeed = 2.2f;   // ELLE FIRLATMA
 
+    [Header("Stress Etkisi")]
+    public float stressDamage = 10f;
+
     [Header("Kırıcı Nesne")]
     public string breakerTag = "Stick";
 
@@ -66,10 +69,16 @@ public class UniversalSmash : MonoBehaviour
         }
     }
 
-    void Smash()
+        void Smash()
     {
         if (isSmashed) return;
         isSmashed = true;
+
+        // 🔴 STRESS MANAGER'A HABER VER
+        if (StressManager.Instance != null)
+        {
+            StressManager.Instance.ReduceStress(stressDamage);
+        }
 
         solidRb.isKinematic = false;
         solidRb.useGravity = true;
@@ -89,8 +98,4 @@ public class UniversalSmash : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void SmashIt()
-    {
-        Smash();
-    }
 }
