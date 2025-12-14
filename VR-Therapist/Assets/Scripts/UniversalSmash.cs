@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using System.Collections; // Gerekli değil ama hata ayıklama için bırakılabilir
 
 public class UniversalSmash : MonoBehaviour
 {
@@ -8,11 +7,11 @@ public class UniversalSmash : MonoBehaviour
     public GameObject brokenSibling;
 
     [Header("Kırılma Eşikleri")]
-    public float requiredImpulse = 30f;      // SOPA (deneyerek artır)
-    public float requiredThrowSpeed = 2.2f;  // ELLE FIRLATMA
+    public float requiredImpulse = 30f;      
+    public float requiredThrowSpeed = 2.2f;  
 
     [Header("Stress Etkisi")]
-    public float stressDamage = 10f;
+    public float stressDamage = 10f; // Stres yöneticisine gönderilecek değer
 
     [Header("Kırıcı Nesne")]
     public string breakerTag = "Stick";
@@ -24,8 +23,10 @@ public class UniversalSmash : MonoBehaviour
     private Rigidbody brokenRb;
     private XRGrabInteractable grab;
     
-    // YENİ EKLENTİ: AudioPlayer'a referans
-    private AudioPlayer audioPlayer; // Referans tutulmaya devam edilecek
+    private AudioPlayer audioPlayer; 
+    
+    // 💥 YENİ EKLENTİ: Parçacık Sistemi referansı
+    private ParticleSystem smashParticles;
 
     void Start()
     {
@@ -37,18 +38,23 @@ public class UniversalSmash : MonoBehaviour
             brokenRb = brokenSibling.GetComponent<Rigidbody>();
             brokenSibling.SetActive(false);
             
-            // 🟡 KRİTİK GÜNCELLEME: AudioPlayer'ı KIRIK objeden alıyoruz.
+            // AudioPlayer'ı kırık objeden alma
             audioPlayer = brokenSibling.GetComponent<AudioPlayer>();
             if (audioPlayer == null)
             {
-                Debug.LogError("Ses çalmak için AudioPlayer script'i KIRIK NESNEDE eksik! Lütfen AudioPlayer ve AudioSource'u brokenSibling'e ekleyin.", this);
+                Debug.LogError("Ses çalmak için AudioPlayer script'i KIRIK NESNEDE eksik!", this);
+            }
+            
+            // 💥 YENİ EKLENTİ: ParticleSystem'i kırık objeden alma
+            smashParticles = brokenSibling.GetComponent<ParticleSystem>();
+            if (smashParticles == null)
+            {
+                Debug.LogError("Görsel efekt için Particle System script'i KIRIK NESNEDE eksik! (brokenSibling'e eklenmeli)", this);
             }
         }
 
         if (grab != null)
             grab.selectExited.AddListener(OnReleased);
-
-        // Eski audioPlayer bulma mantığı artık yukarıdaki if bloğunda kırık obje kontrolü ile birleşti ve kaldırıldı.
     }
 
     void OnReleased(SelectExitEventArgs args)
@@ -64,7 +70,6 @@ public class UniversalSmash : MonoBehaviour
         if (collision.collider.CompareTag(breakerTag))
         {
             float impulse = collision.impulse.magnitude;
-            // Impulse değeri konsolda görünüyorsa, çarpışma algılanıyor demektir!
             Debug.Log($"[IMPULSE] {impulse}");
 
             if (impulse >= requiredImpulse)
@@ -88,39 +93,51 @@ public class UniversalSmash : MonoBehaviour
         if (isSmashed) return;
         isSmashed = true;
         
-        // Bu noktada kırılma tetikleniyor.
-
-        // 🔴 STRESS MANAGER'A HABER VER
+        // 🔴 STRESS MANAGER'A HABER VER (Mevcut kodunuzdaki çağrı)
         if (StressManager.Instance != null)
         {
-            StressManager.Instance.ReduceStress(stressDamage);
+            StressManager.Instance.ReduceStress(stressDamage); 
         }
 
-        // Kırılma Fizik Ayarları
-        solidRb.isKinematic = false;
-        solidRb.useGravity = true;
-
-        // Kırık Modeli Aktifleştirme
+        // -----------------------------------------------------------------
+        // ÖN-TETİKLEME: Kırık obje aktive edilmeli ve görsel/ses tetiklenmeli
+        // -----------------------------------------------------------------
+        
+        // Kırık Modeli Aktifleştirme (Konum ve rotasyon sağlam nesneden alınır)
         brokenSibling.transform.position = transform.position;
         brokenSibling.transform.rotation = transform.rotation;
         brokenSibling.SetActive(true);
+
+        // Sesi Çal
+        if (audioPlayer != null)
+        {
+            audioPlayer.PlaySoundOnly(); 
+        }
+
+        // 💥 YENİ EKLENTİ: Parçacığı Tetikle
+        if (smashParticles != null)
+        {
+            smashParticles.Play(); 
+        }
+        
+        // -----------------------------------------------------------------
+        // FİZİK VE SON TEMİZLİK
+        // -----------------------------------------------------------------
+        
+        // Kırılma Fizik Ayarları
+        solidRb.isKinematic = false;
+        solidRb.useGravity = true;
 
         if (brokenRb != null)
         {
             brokenRb.isKinematic = false;
             brokenRb.useGravity = true;
+            // Kırılma hızını sağlam nesneden aktar
             brokenRb.velocity = solidRb.velocity;
             brokenRb.angularVelocity = solidRb.angularVelocity;
         }
 
-        // 1. ANINDA KAPAT: Sağlam nesneyi hemen sahneden kaldır.
-        // Bu komut artık güvenli çünkü AudioSource ve AudioPlayer KIRIK objede!
+        // Sağlam nesneyi sahneden kaldır.
         gameObject.SetActive(false); 
-
-        // 2. SADECE SESİ ÇAL: Kırık objeden alınan AudioPlayer'ı çağırıp sesi başlat.
-        if (audioPlayer != null)
-        {
-            audioPlayer.PlaySoundOnly(); 
-        }
     }
 }
