@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using System.Collections; // Gerekli değil ama hata ayıklama için bırakılabilir
 
 public class UniversalSmash : MonoBehaviour
 {
@@ -8,7 +9,7 @@ public class UniversalSmash : MonoBehaviour
 
     [Header("Kırılma Eşikleri")]
     public float requiredImpulse = 30f;      // SOPA (deneyerek artır)
-    public float requiredThrowSpeed = 2.2f;   // ELLE FIRLATMA
+    public float requiredThrowSpeed = 2.2f;  // ELLE FIRLATMA
 
     [Header("Stress Etkisi")]
     public float stressDamage = 10f;
@@ -22,6 +23,9 @@ public class UniversalSmash : MonoBehaviour
     private Rigidbody solidRb;
     private Rigidbody brokenRb;
     private XRGrabInteractable grab;
+    
+    // YENİ EKLENTİ: AudioPlayer'a referans
+    private AudioPlayer audioPlayer; // Referans tutulmaya devam edilecek
 
     void Start()
     {
@@ -32,10 +36,19 @@ public class UniversalSmash : MonoBehaviour
         {
             brokenRb = brokenSibling.GetComponent<Rigidbody>();
             brokenSibling.SetActive(false);
+            
+            // 🟡 KRİTİK GÜNCELLEME: AudioPlayer'ı KIRIK objeden alıyoruz.
+            audioPlayer = brokenSibling.GetComponent<AudioPlayer>();
+            if (audioPlayer == null)
+            {
+                Debug.LogError("Ses çalmak için AudioPlayer script'i KIRIK NESNEDE eksik! Lütfen AudioPlayer ve AudioSource'u brokenSibling'e ekleyin.", this);
+            }
         }
 
         if (grab != null)
             grab.selectExited.AddListener(OnReleased);
+
+        // Eski audioPlayer bulma mantığı artık yukarıdaki if bloğunda kırık obje kontrolü ile birleşti ve kaldırıldı.
     }
 
     void OnReleased(SelectExitEventArgs args)
@@ -51,6 +64,7 @@ public class UniversalSmash : MonoBehaviour
         if (collision.collider.CompareTag(breakerTag))
         {
             float impulse = collision.impulse.magnitude;
+            // Impulse değeri konsolda görünüyorsa, çarpışma algılanıyor demektir!
             Debug.Log($"[IMPULSE] {impulse}");
 
             if (impulse >= requiredImpulse)
@@ -69,10 +83,12 @@ public class UniversalSmash : MonoBehaviour
         }
     }
 
-        void Smash()
+    void Smash()
     {
         if (isSmashed) return;
         isSmashed = true;
+        
+        // Bu noktada kırılma tetikleniyor.
 
         // 🔴 STRESS MANAGER'A HABER VER
         if (StressManager.Instance != null)
@@ -80,9 +96,11 @@ public class UniversalSmash : MonoBehaviour
             StressManager.Instance.ReduceStress(stressDamage);
         }
 
+        // Kırılma Fizik Ayarları
         solidRb.isKinematic = false;
         solidRb.useGravity = true;
 
+        // Kırık Modeli Aktifleştirme
         brokenSibling.transform.position = transform.position;
         brokenSibling.transform.rotation = transform.rotation;
         brokenSibling.SetActive(true);
@@ -95,7 +113,14 @@ public class UniversalSmash : MonoBehaviour
             brokenRb.angularVelocity = solidRb.angularVelocity;
         }
 
-        gameObject.SetActive(false);
-    }
+        // 1. ANINDA KAPAT: Sağlam nesneyi hemen sahneden kaldır.
+        // Bu komut artık güvenli çünkü AudioSource ve AudioPlayer KIRIK objede!
+        gameObject.SetActive(false); 
 
+        // 2. SADECE SESİ ÇAL: Kırık objeden alınan AudioPlayer'ı çağırıp sesi başlat.
+        if (audioPlayer != null)
+        {
+            audioPlayer.PlaySoundOnly(); 
+        }
+    }
 }
