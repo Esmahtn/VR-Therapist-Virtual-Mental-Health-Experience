@@ -152413,7 +152413,7 @@ PrefabInstance:
     - target: {fileID: 3088444507228927444, guid: b17560b895b8ed648869131491856a1c,
         type: 3}
       propertyPath: m_CameraYOffset
-      value: 2.2
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3088444507228927444, guid: b17560b895b8ed648869131491856a1c,
         type: 3}
