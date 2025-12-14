@@ -76659,7 +76659,6 @@ GameObject:
   - component: {fileID: 1078575258}
   - component: {fileID: 1078575257}
   - component: {fileID: 1078575260}
-  - component: {fileID: 1078575259}
   - component: {fileID: 1078575261}
   m_Layer: 0
   m_Name: Stick_Root
@@ -76712,18 +76711,6 @@ Transform:
   - {fileID: 1795032980}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1078575259
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1078575255}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68d13ed3ddb190a4faa7520e2076ba55, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1078575260
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -99331,7 +99318,7 @@ Transform:
   m_GameObject: {fileID: 1394421853}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: -0.5, y: 0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.0141, y: 1.0141, z: 1.0141}
   m_ConstrainProportionsScale: 0
   m_Children: []
