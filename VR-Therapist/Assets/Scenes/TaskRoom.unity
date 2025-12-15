@@ -26855,8 +26855,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   brokenSibling: {fileID: 1216789617}
-  requiredImpulse: 20
-  requiredThrowSpeed: 1.5
+  requiredImpulse: 10
+  requiredThrowSpeed: 3
   stressDamage: 10
   breakerTag: Stick
 --- !u!114 &581210071
@@ -27020,8 +27020,8 @@ Rigidbody:
   m_GameObject: {fileID: 581210063}
   serializedVersion: 4
   m_Mass: 4
-  m_Drag: 5
-  m_AngularDrag: 5
+  m_Drag: 1
+  m_AngularDrag: 1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
