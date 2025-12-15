@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
+// Sahne geçişi için gerekli, bunu eklemeyi unutmayın!
+using UnityEngine.SceneManagement; 
 
 // JSON'dan gelen yanıtları tutmak için yardımcı sınıflar
 [System.Serializable]
@@ -17,13 +19,11 @@ public class ChatRequestData // /chat'e gönderilecek veri yapısı
 [System.Serializable]
 public class STTResponse { public string text; }
 
-// <<< YENİ EKLENEN TTS GÖNDERİM SINIFI >>>
 [System.Serializable]
 public class TtsRequestData // /tts'e gönderilecek veri yapısı
 {
     public string text;
 }
-// <<< EKLENEN KISIM BİTTİ >>>
 
 
 public class SpeechChatClient : MonoBehaviour
@@ -156,7 +156,29 @@ public class SpeechChatClient : MonoBehaviour
             yield break;
         }
 
-        // 3. TTS: Yanıtı Sese Çevir ve Oynat
+        // <<< YÖNLENDİRME KONTROLÜ VE ÖZEL YÖNLENDİRME MESAJI (KRİTİK KISIM) >>>
+        if (geminiReply.Trim() == "[REDIRECT_RAGE_ROOM]")
+        {
+            // Kullanıcıyı yönlendirme komutu alındı
+            Debug.LogWarning("🚨 YÖNLENDİRME KOMUTU ALINDI: Stres Atma Odasına geçiliyor...");
+            
+            // YÖNLENDİRME İÇİN DÜZGÜN BİR SESLİ YANIT ÜRET
+            string redirectText = "Anlıyorum. Harika bir fikir! Haydi stresini atabileceğin odaya geçelim.";
+            yield return StartCoroutine(SendTtsRequest(redirectText)); 
+            
+            // Sahne geçişi için (Eğer sahne adınız "RageRoomScene" ise)
+            // SceneManager.LoadScene("RageRoomScene");
+            
+            // Deneme aşamasında olduğumuz için sadece log atıyoruz.
+            Debug.Log("--- SAHNE GEÇİŞİ İÇİN SceneManager.LoadScene() SATIRINI AKTİF EDİNİZ ---");
+            
+            Destroy(recordedClip);
+            yield break; // Döngüyü burada BİTİR. Komutun kendisinin okunmasını engeller.
+        }
+        // <<< YÖNLENDİRME KONTROLÜ BİTTİ >>>
+
+
+        // 3. TTS: Yanıtı Sese Çevir ve Oynat (Yönlendirme yoksa bu adım çalışır)
         Debug.Log("3. 🗣️ Yanıt TTS'e Gönderiliyor ve Oynatılıyor...");
         yield return StartCoroutine(SendTtsRequest(geminiReply));
         
@@ -235,7 +257,6 @@ public class SpeechChatClient : MonoBehaviour
             try
             {
                 string responseJson = request.downloadHandler.text;
-                // Yanıtın boş olup olmadığını kontrol et
                 if (string.IsNullOrEmpty(responseJson))
                 {
                     Debug.LogError("Server'dan boş yanıt gövdesi alındı.");
@@ -245,22 +266,18 @@ public class SpeechChatClient : MonoBehaviour
 
                 ChatResponse response = JsonUtility.FromJson<ChatResponse>(responseJson);
                 
-                // Eğer yanıt objesi alındı ancak 'reply' alanı boşsa
                 if (string.IsNullOrEmpty(response.reply))
                 {
-                    // Bu durum, sunucudan bir hata mesajı gelmediği halde reply'ın boş olduğunu gösterir.
                     Debug.LogWarning("Gemini'den yanıt alındı, ancak içerik boştu (Filtrelenmiş olabilir).");
                     callback(null);
                 }
                 else
                 {
-                    // Başarılı yanıt
                     callback(response.reply);
                 }
             }
             catch (System.Exception e)
             {
-                // Parse etme hatası (Türkçe karakter veya format hatası)
                 Debug.LogError($"Chat yanıtı okunamadı. Hata: {e.Message}. Gelen metin: {request.downloadHandler.text.Substring(0, Mathf.Min(request.downloadHandler.text.Length, 100))}...");
                 callback(null);
             }
@@ -272,26 +289,22 @@ public class SpeechChatClient : MonoBehaviour
     {
         string url = BASE_URL + "/tts";
         
-        // GÜNCEL VE DOĞRU JSON OLUŞTURMA YÖNTEMİ
         var requestData = new TtsRequestData 
         {
             text = text 
         };
         string json = JsonUtility.ToJson(requestData);
-        // GÜNCELLEME BİTTİ
 
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        // İndirme işleyicisini ses verisi (MP3) için ayarla
         request.downloadHandler = new DownloadHandlerAudioClip(url, AudioType.MPEG); 
-        request.SetRequestHeader("Content-Type", "application/json; charset=utf-8"); // UTF-8 zorlandı
+        request.SetRequestHeader("Content-Type", "application/json; charset=utf-8"); 
 
         yield return request.SendWebRequest();
 
         if (request.result != UnityWebRequest.Result.Success)
         {
-            // Detaylı hata mesajı loglama
             Debug.LogError($"TTS Hatası: {request.error}. Server Yanıtı: {request.downloadHandler.text}");
         }
         else
