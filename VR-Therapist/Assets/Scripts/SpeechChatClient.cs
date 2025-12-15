@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
+
 // Sahne geçişi için gerekli, bunu eklemeyi unutmayın!
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 // JSON'dan gelen yanıtları tutmak için yardımcı sınıflar
 [System.Serializable]
@@ -164,16 +165,16 @@ public class SpeechChatClient : MonoBehaviour
             
             // YÖNLENDİRME İÇİN DÜZGÜN BİR SESLİ YANIT ÜRET
             string redirectText = "Anlıyorum. Harika bir fikir! Haydi stresini atabileceğin odaya geçelim.";
+            
+            // TTS BİTENE KADAR BEKLE
             yield return StartCoroutine(SendTtsRequest(redirectText)); 
             
-            // Sahne geçişi için (Eğer sahne adınız "RageRoomScene" ise)
-            // SceneManager.LoadScene("RageRoomScene");
-            
-            // Deneme aşamasında olduğumuz için sadece log atıyoruz.
-            Debug.Log("--- SAHNE GEÇİŞİ İÇİN SceneManager.LoadScene() SATIRINI AKTİF EDİNİZ ---");
+            // TTS BİTTİĞİNDE: Artık güvenle sahne geçişi yapabiliriz.
+            Debug.Log("TTS oynatma bitti. Sahne geçişi yapılıyor...");
+            SceneManager.LoadScene("TaskRoom");
             
             Destroy(recordedClip);
-            yield break; // Döngüyü burada BİTİR. Komutun kendisinin okunmasını engeller.
+            yield break; // Döngüyü burada BİTİR.
         }
         // <<< YÖNLENDİRME KONTROLÜ BİTTİ >>>
 
@@ -315,6 +316,14 @@ public class SpeechChatClient : MonoBehaviour
                 audioSource.clip = clip;
                 audioSource.Play();
                 Debug.Log("➡️ Ses dosyası oynatılıyor.");
+                
+                // <<< KRİTİK EKLENTİ: Oynatma bitene kadar bekle >>>
+                // audioSource.isPlaying doğru olduğu sürece Coroutine'i duraklat
+                while (audioSource.isPlaying)
+                {
+                    yield return null; // Bir sonraki frame'i bekle
+                }
+                // <<< EKLENTİ BİTTİ >>>
             }
         }
     }
