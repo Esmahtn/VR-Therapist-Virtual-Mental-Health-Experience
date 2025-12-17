@@ -141,4 +141,5 @@ public class SpeechChatClient : MonoBehaviour
             while (audioSource.isPlaying) yield return null;
         }
     }
+    
 }
