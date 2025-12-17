@@ -6,14 +6,14 @@ public class StressManager : MonoBehaviour
 {
     public static StressManager Instance;
 
-    [Header("UI")]
+    [Header("UI Elemanları")]
+    public GameObject stressUIPaneli;    // Stress Bar'ın tamamını kapsayan ana obje
     public Slider stressSlider;
-    public TMP_Text stressPercentText;   // %100 → %0
-    public TMP_Text feedbackText;        // Stress 0 olunca mesaj
+    public TMP_Text stressPercentText;   
+    public TMP_Text feedbackText;        
 
     [Header("Stress Ayarları")]
     public float maxStress = 100f;
-
     private float currentStress;
     private bool stressFinished = false;
 
@@ -30,21 +30,32 @@ public class StressManager : MonoBehaviour
         currentStress = maxStress;
         UpdateUI();
 
-        // Başlangıçta feedback kapalı
+        // Başlangıçta her şeyi kapatıyoruz (1. odada gözükmemesi için)
+        if (stressUIPaneli != null)
+            stressUIPaneli.SetActive(false); 
+            
         if (feedbackText != null)
             feedbackText.gameObject.SetActive(false);
     }
 
-    // 🔻 UniversalSmash burayı çağırıyor
+    // 2. Odaya geçince bu fonksiyonu çağıracağız
+    public void BariAc()
+    {
+        if (stressUIPaneli != null)
+        {
+            stressUIPaneli.SetActive(true);
+            Debug.Log("Stress Bar aktif edildi.");
+        }
+    }
+
+    // Objeler kırılınca bu fonksiyon çağırılacak
     public void ReduceStress(float amount)
     {
         if (stressFinished) return;
 
-        // 🔽 HER SEFERİNDE 5 AZALIR
-        currentStress -= 5f;
+        currentStress -= amount; // Artık dışarıdan ne kadar düşeceği söylenebilir
         currentStress = Mathf.Clamp(currentStress, 0f, maxStress);
 
-        // 🔔 Stress tamamen bitti mi?
         if (currentStress <= 0f)
         {
             stressFinished = true;
@@ -56,11 +67,9 @@ public class StressManager : MonoBehaviour
 
     void UpdateUI()
     {
-        // Slider (0–1)
         if (stressSlider != null)
             stressSlider.value = currentStress / maxStress;
 
-        // % Yazısı
         if (stressPercentText != null)
         {
             int percent = Mathf.RoundToInt((currentStress / maxStress) * 100f);
@@ -75,7 +84,5 @@ public class StressManager : MonoBehaviour
             feedbackText.gameObject.SetActive(true);
             feedbackText.text = "STRESS SEVİYENİZ NORMAL DÜZEYE ERİŞTİ";
         }
-
-        Debug.Log("STRESS TAMAMEN AZALDI");
     }
 }
