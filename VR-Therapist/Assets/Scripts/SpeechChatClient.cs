@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
+using UnityEngine.InputSystem; // Yeni Input System için
+using UnityEngine.XR.Interaction.Toolkit; // VR etkileşimi için
 
 [System.Serializable] public class ChatResponse { public string reply; }
 [System.Serializable] public class ChatRequestData { public string text; public string context; }
@@ -16,6 +18,10 @@ public class SpeechChatClient : MonoBehaviour
     public float maxRecordingDuration = 10f;
     public AudioSource audioSource;
 
+    [Header("VR Giriş Ayarları")]
+    [Tooltip("Sol el X butonu için: XRI LeftHand Interaction/Select veya Primary Button seçebilirsin")]
+    public InputActionProperty vrRecordAction; 
+
     private string microphoneDevice;
     private AudioClip recording;
     private bool isRecording = false;
@@ -23,24 +29,40 @@ public class SpeechChatClient : MonoBehaviour
     void Start()
     {
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
-        if (Microphone.devices.Length > 0) microphoneDevice = Microphone.devices[0];
+        
+        // Mikrofona erişim kontrolü
+        if (Microphone.devices.Length > 0) 
+        {
+            microphoneDevice = Microphone.devices[0];
+            Debug.Log("Mikrofon Hazır: " + microphoneDevice);
+        }
+        else
+        {
+            Debug.LogError("Mikrofon bulunamadı!");
+        }
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space)) 
-    {
-        Debug.Log("KLAVYEDEN SPACE TUŞUNA BASILDI!");
-    }
-        if (Input.GetKeyDown(KeyCode.Space) && !isRecording && microphoneDevice != null) StartRecording();
-        if (Input.GetKeyUp(KeyCode.Space) && isRecording) StopRecordingAndProcess();
+        // VR Butonuna basıldığı an (Kayıt Başlat)
+        if (vrRecordAction.action.WasPressedThisFrame() && !isRecording && microphoneDevice != null) 
+        {
+            StartRecording();
+        }
+
+        // VR Butonu bırakıldığı an (Kaydı Durdur ve Gönder)
+        if (vrRecordAction.action.WasReleasedThisFrame() && isRecording) 
+        {
+            StopRecordingAndProcess();
+        }
     }
 
     void StartRecording()
     {
         isRecording = true;
+        // 16000 Hz genellikle STT servisleri için idealdir
         recording = Microphone.Start(microphoneDevice, false, (int)maxRecordingDuration, 16000);
-        Debug.Log("🔊 Kayıt Başladı...");
+        Debug.Log("🔊 VR Kayıt Başladı...");
     }
 
     void StopRecordingAndProcess()
@@ -48,25 +70,21 @@ public class SpeechChatClient : MonoBehaviour
         if (!isRecording) return;
         isRecording = false;
 
-        // 1. ÖNCE değişkeni tanımla ve mikrofonun o anki yerini al
         int position = Microphone.GetPosition(microphoneDevice); 
-
-        // 2. SONRA mikrofonu durdur
         Microphone.End(microphoneDevice);
 
-        // 3. ŞİMDİ o değişkeni kontrol et (Hata aldığın yer burasıydı)
-        if (position < 1600) 
+        if (position < 1600) // 0.1 saniyeden kısa kayıtları reddet
         {
-            Debug.LogWarning("Kayıt çok kısa (0.1 sn altı), işlem iptal edildi.");
+            Debug.LogWarning("Kayıt çok kısa, işlem iptal edildi.");
             return;
         }
 
-        // 4. Kalan işlemler
         AudioClip finalClip = TrimAudioClip(recording, position, recording.channels, recording.frequency);
-        Debug.Log("🛑 Kayıt Durduruldu. İşlem Başlatılıyor...");
+        Debug.Log("🛑 VR Kayıt Durduruldu. Server'a gönderiliyor...");
         
         StartCoroutine(FullChatCycle(finalClip));
     }
+
     private AudioClip TrimAudioClip(AudioClip originalClip, int samplesEnd, int channels, int frequency)
     {
         float[] samples = new float[samplesEnd * channels];
@@ -81,16 +99,25 @@ public class SpeechChatClient : MonoBehaviour
         // 1. STT (Sesi Metne Çevir)
         string userText = "";
         yield return StartCoroutine(SendSTTRequest(recordedClip, result => userText = result));
-        if (string.IsNullOrEmpty(userText)) { Destroy(recordedClip); yield break; }
-        Debug.Log("Söylenen: " + userText);
+        
+        if (string.IsNullOrEmpty(userText)) 
+        { 
+            Debug.LogError("STT başarısız veya boş döndü.");
+            Destroy(recordedClip); 
+            yield break; 
+        }
+        Debug.Log("Sen: " + userText);
 
-        // 2. CHAT (Zeka - Gemini)
+        // 2. CHAT (Gemini İşleme)
         string geminiReply = "";
         yield return StartCoroutine(SendChatRequest(userText, result => geminiReply = result));
-        Debug.Log("Gelen Cevap: " + geminiReply);
+        Debug.Log("Terapist: " + geminiReply);
 
-        // 3. TTS (Metni Sese Çevir ve Oynat)
-        if (!string.IsNullOrEmpty(geminiReply)) yield return StartCoroutine(SendTtsRequest(geminiReply));
+        // 3. TTS (Sese Çevir ve Oynat)
+        if (!string.IsNullOrEmpty(geminiReply)) 
+        {
+            yield return StartCoroutine(SendTtsRequest(geminiReply));
+        }
 
         Destroy(recordedClip);
     }
@@ -98,48 +125,67 @@ public class SpeechChatClient : MonoBehaviour
     IEnumerator SendSTTRequest(AudioClip clip, System.Action<string> callback)
     {
         string url = BASE_URL + "/stt";
-        byte[] wavBytes = WavUtility.FromAudioClip(clip); // WavUtility scripti Asset içinde olmalı
+        byte[] wavBytes = WavUtility.FromAudioClip(clip); // WavUtility dosyası projenizde olmalı
+        
         WWWForm form = new WWWForm();
         form.AddBinaryData("file", wavBytes, "recording.wav", "audio/wav");
         
         UnityWebRequest request = UnityWebRequest.Post(url, form);
         yield return request.SendWebRequest();
+
         if (request.result == UnityWebRequest.Result.Success)
             callback(JsonUtility.FromJson<STTResponse>(request.downloadHandler.text).text);
-        else callback("");
+        else 
+        {
+            Debug.LogError("STT Hatası: " + request.error);
+            callback("");
+        }
     }
 
     IEnumerator SendChatRequest(string text, System.Action<string> callback)
     {
         string url = BASE_URL + "/chat";
         string json = JsonUtility.ToJson(new ChatRequestData { text = text });
+        
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] body = Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(body);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
+        
         yield return request.SendWebRequest();
+
         if (request.result == UnityWebRequest.Result.Success)
             callback(JsonUtility.FromJson<ChatResponse>(request.downloadHandler.text).reply);
-        else callback("");
+        else 
+        {
+            Debug.LogError("Chat Hatası: " + request.error);
+            callback("");
+        }
     }
 
     IEnumerator SendTtsRequest(string text)
     {
         string url = BASE_URL + "/tts";
         string json = JsonUtility.ToJson(new TtsRequestData { text = text });
+        
         UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] body = Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(body);
         request.downloadHandler = new DownloadHandlerAudioClip(url, AudioType.MPEG);
         request.SetRequestHeader("Content-Type", "application/json");
+        
         yield return request.SendWebRequest();
+
         if (request.result == UnityWebRequest.Result.Success)
         {
             audioSource.clip = DownloadHandlerAudioClip.GetContent(request);
             audioSource.Play();
             while (audioSource.isPlaying) yield return null;
         }
+        else
+        {
+            Debug.LogError("TTS Hatası: " + request.error);
+        }
     }
-    
 }
